@@ -1,0 +1,528 @@
+{
+  "name": "System Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "bash /home/scott/bin/system_snapshot.sh"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -272
+      ],
+      "id": "b88ddc56-0b3a-4804-835b-7b33c2f9be0b",
+      "name": "Execute a command",
+      "credentials": {
+        "sshPassword": {
+          "id": "4KRVnOR90fp8S2tI",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/files",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "purpose",
+              "value": "assistants"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "snapshotFile"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        528,
+        -272
+      ],
+      "id": "c172829e-c547-4e4a-bc6d-a387606456dd",
+      "name": "HTTP Request",
+      "credentials": {
+        "openAiApi": {
+          "id": "m5JoeNDL3kEsTQc7",
+          "name": "OpenAi account"
+        },
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "stdout",
+        "binaryPropertyName": "snapshotFile",
+        "options": {
+          "fileName": "snapshot.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        -272
+      ],
+      "id": "df45ae4f-1219-4e4c-86dc-ceca48b8b3ce",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        752,
+        -272
+      ],
+      "id": "311a1ca0-ed1f-49a9-af15-7609270b60d5",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $json[\"id\"] }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"System snapshot attached.\",\n  \"attachments\": [\n    {\n      \"file_id\": \"{{$node['HTTP Request'].json['id']}}\",\n      \"tools\": [\n        { \"type\": \"file_search\" }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        976,
+        -272
+      ],
+      "id": "d2f23d04-e1eb-43d8-b082-282cbefde975",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{$node[\"HTTP Request1\"].json[\"id\"]}}/runs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"assistant_id\": \"asst_12K9Ycs4loQeFgytz0tSQ2Cl\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1200,
+        -272
+      ],
+      "id": "54e8c7ea-7ef0-4a2e-ab08-507aa4df5e6f",
+      "name": "HTTP Request3",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $node[\"HTTP Request1\"].json[\"id\"] }}/runs/{{ $json[\"id\"] }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1424,
+        -272
+      ],
+      "id": "90798db3-3894-4f35-97de-e419d2e90b23",
+      "name": "HTTP Request4",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        -336
+      ],
+      "id": "e38c9080-2c9e-4f0b-b747-6247ffc8321f",
+      "name": "Wait",
+      "webhookId": "f40c3569-0a37-411d-b7cf-234560032212"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dc2e0ad9-d000-4c54-8e31-7285179e89d6",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        -272
+      ],
+      "id": "b7674f75-3fe3-4a64-9def-78bcae5e29e0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $json.thread_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2096,
+        -272
+      ],
+      "id": "7912216b-2bea-41e7-ba0a-79c34720d48d",
+      "name": "HTTP Request5",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "72QJIeL1I3P54RUv",
+          "name": "Default Project"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "homeserver@worleys.us",
+        "toEmail": "scott@worleys.us",
+        "html": "={{$node[\"Format Email\"].json[\"email_body\"]}}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2544,
+        -272
+      ],
+      "id": "1f786444-85f5-408f-874f-8a288ad9cfd5",
+      "name": "Send email",
+      "webhookId": "f3661491-4f5a-4d0b-9002-303e98dbdee3",
+      "credentials": {
+        "smtp": {
+          "id": "7DZKtAF2SnK3lePa",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.data[0].content[0].text.value;\n\nlet report;\ntry {\n  report = JSON.parse(raw);\n} catch (e) {\n  return [{ json: { error: \"JSON parsing failed\", raw }}];\n}\n\nfunction esc(str) {\n  return String(str).replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n}\n\n// Color mapping for risk levels\nconst riskColor = {\n  low:    \"#2e7d32\",\n  medium: \"#ed6c02\",\n  high:   \"#d32f2f\"\n};\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f4f4f5; padding:20px;\">\n\n<div style=\"max-width:800px; margin:0 auto; background:#ffffff; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.08);\">\n\n  <h2 style=\"margin-top:0; font-size:22px; color:#111;\">\n    Home-Server Health Report\n  </h2>\n\n  <div style=\"color:#555; font-size:14px; margin-bottom:20px;\">\n    ${new Date().toLocaleString()}\n  </div>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:20px 0;\">\n\n  <!-- SUMMARY SECTION -->\n  <h3 style=\"font-size:18px; color:#111;\">Overall System Summary</h3>\n  <table style=\"width:100%; border-collapse:collapse; font-size:15px;\">\n    ${Object.entries(report.summaries).map(([k, v]) => `\n      <tr>\n        <td style=\"padding:6px 0; color:#555; width:180px; font-weight:600; text-transform:capitalize;\">\n          ${k.replace(/_/g, ' ')}\n        </td>\n        <td style=\"padding:6px 0; color:#333;\">${esc(v)}</td>\n      </tr>\n    `).join(\"\")}\n  </table>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- DETECTED ISSUES -->\n  <h3 style=\"font-size:18px; color:#111;\">Detected Issues</h3>\n  <ul style=\"color:#333; font-size:15px;\">\n    ${report.detected_issues.map(i => `\n      <li style=\"margin-bottom:10px;\">\n        <strong style=\"color:${riskColor[i.impact] || \"#555\"};\">\n          [${i.impact.toUpperCase()}]\n        </strong>\n        ${esc(i.description)}\n      </li>\n    `).join(\"\")}\n  </ul>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- OPTIMIZATIONS -->\n  <h3 style=\"font-size:18px; color:#111;\">Optimizations</h3>\n  ${report.optimizations.map(o => `\n    <div style=\"margin-bottom:20px;\">\n      <div style=\"font-weight:600; text-transform:uppercase; color:#111; margin-bottom:6px;\">\n        ${esc(o.category)}\n      </div>\n      <div style=\"color:#333; margin-left:10px;\">\n        <strong>Suggestion:</strong> ${esc(o.description)}<br>\n        <strong>Reasoning:</strong> ${esc(o.reasoning)}\n      </div>\n    </div>\n  `).join(\"\")}\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- RISK LEVEL -->\n  <h3 style=\"font-size:18px; color:#111;\">Risk Level</h3>\n  <div style=\"font-size:20px; font-weight:700; color:${riskColor[report.risk_level] || \"#000\"};\">\n    ${report.risk_level.toUpperCase()}\n  </div>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- ACTIONABLE STEPS -->\n  <h3 style=\"font-size:18px; color:#111;\">Actionable Steps</h3>\n  <ol style=\"font-size:15px; color:#333; padding-left:20px;\">\n    ${report.actionable_steps.map(s => `\n      <li style=\"margin:10px 0;\">${esc(s)}</li>\n    `).join(\"\")}\n  </ol>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- SUSPICIOUS BEHAVIOR -->\n  <h3 style=\"font-size:18px; color:#111;\">Suspicious / Anomalous Behavior</h3>\n  <ul style=\"font-size:15px; color:#333;\">\n    ${report.suspicious_or_anomalous_behavior.map(s => `\n      <li style=\"margin:10px 0;\">${esc(s)}</li>\n    `).join(\"\")}\n  </ul>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- MISSING INSTRUMENTATION -->\n  <h3 style=\"font-size:18px; color:#111;\">Missing Instrumentation</h3>\n  <ul style=\"font-size:15px; color:#333;\">\n    ${report.missing_instrumentation.map(s => `\n      <li style=\"margin:10px 0;\">${esc(s)}</li>\n    `).join(\"\")}\n  </ul>\n\n  <hr style=\"border:0; border-top:1px solid #e5e7eb; margin:28px 0;\">\n\n  <!-- FOOTER -->\n  <div style=\"font-size:12px; color:#888; text-align:center; margin-top:30px;\">\n    This automated report was generated by n8n.\n  </div>\n\n</div>\n\n</body>\n</html>\n`;\n\nreturn [{ json: { email_body: html }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        -272
+      ],
+      "id": "875596aa-3f35-4500-a50b-df60b7c261d4",
+      "name": "Format Email"
+    },
+    {
+      "parameters": {
+        "path": "a3c41b6f-38d6-4b19-8d88-3c5bc9e80c7d",
+        "options": {
+          "noResponseBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        -272
+      ],
+      "id": "1fcc35f2-b410-486d-a5b8-225b7819f297",
+      "name": "Webhook",
+      "webhookId": "a3c41b6f-38d6-4b19-8d88-3c5bc9e80c7d"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute a command": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Format Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "41f8e504-5b18-437b-9644-23ce8b54d74b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "be91b36bfcf45c5be1eb1ce04b1faa6c7fe08d9cd545205e61d97e1adb26d491"
+  },
+  "id": "UjnqovchaEgtHSHh",
+  "tags": []
+}
