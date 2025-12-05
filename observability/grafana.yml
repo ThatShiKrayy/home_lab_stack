@@ -1,0 +1,30 @@
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    user: $APPS_PUID:$APPS_PGID
+    networks:
+    - observability
+    ports:
+    - '9095:3000'
+    depends_on:
+    - prometheus
+    volumes:
+    - $OBS_DATA/grafana:/var/lib/grafana
+    - $OBS_DATA/grafana-config/grafana.ini:/etc/grafana/grafana.ini
+    - $OBS_DATA/grafana-provisioning:/etc/grafana/provisioning
+    labels:
+    - "traefik.enable=true"
+    ## Router
+    - "traefik.http.routers.grafana-rtr.entrypoints=websecure"
+    - "traefik.http.routers.grafana-rtr.rule=Host(`grafana.$DOMAINNAME_1`)"
+    - "traefik.http.routers.grafana-rtr.middlewares=chain-no-auth@file"
+    - "traefik.http.routers.grafana-rtr.service=grafana-svc"
+    ## Service
+    - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
+    - "traefik.docker.network=proxy"
+    mem_limit: 1g
+    cpus: 1.0

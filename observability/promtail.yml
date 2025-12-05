@@ -1,0 +1,20 @@
+services:
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    security_opt:
+    - no-new-privileges:true
+    volumes:
+    - $LOGDIR:/var/log:ro
+    - $OBS_DATA/promtail:/etc/promtail
+    command:
+    - -config.file=/etc/promtail/config.yml
+    - -config.expand-env=true
+    ports:
+    - 9080:9080
+    - 31022:31022
+    networks:
+    - observability
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5

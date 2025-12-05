@@ -1,0 +1,23 @@
+services:
+  syslog-ng:
+    container_name: syslog
+    user: root
+    environment:
+    - PUID=0
+    - PGID=0
+    - TZ=$TZ
+    - LOG_TO_STDOUT=false
+    image: lscr.io/linuxserver/syslog-ng:latest
+    ports:
+    - 514:514/udp
+    - 601:6601/tcp
+    - 6514:6514/tcp
+    - 4853:514/udp
+    restart: unless-stopped
+    #security_opt:
+    #- no-new-privileges:true
+    volumes:
+    - $OBS_DATA/syslog:/config
+    - $CORELOGDIR/syslog:/var/syslog
+    mem_limit: 256m
+    cpus: 0.25

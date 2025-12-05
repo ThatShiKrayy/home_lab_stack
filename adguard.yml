@@ -1,0 +1,41 @@
+services:
+  adguard:
+    image: adguard/adguardhome
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    container_name: adguard
+    networks:
+    - default
+    ports:
+    - 53:53/tcp
+    - 53:53/udp
+    - 6443:6443/tcp
+    - 86:80/tcp
+    - 3020:3000/tcp
+    volumes:
+    - $CORE_DATA/adguard/conf:/opt/adguardhome/conf
+    - $CORE_DATA/adguard/work:/opt/adguardhome/work
+    mem_limit: 512m
+    cpus: 0.5
+    # labels:
+    # - "traefik.enable=true"
+    # - "traefik.http.routers.adguard.entrypoints=websecure"
+    # - "traefik.http.routers.adguard.rule=Host(`dns.worleys.us`)" # change with your own domain/sub domain
+    # - "traefik.http.middlewares.adguard-https-redirect.redirectscheme.scheme=https"
+    # - "traefik.http.routers.adguard.middlewares=adguard-https-redirect"
+    # - "traefik.http.routers.adguard-secure.entrypoints=websecure"
+    # - "traefik.http.routers.adguard-secure.rule=Host(`dns.worleys.us`)" # change with your own domain/sub domain
+    # - "traefik.http.routers.adguard-secure.tls=true"
+    # - "traefik.http.routers.adguard-secure.service=adguard"
+    # - "traefik.http.services.adguard.loadbalancer.server.port=86"
+    # - "traefik.docker.network=t2_proxy"
+    #networks:
+    #proxy:
+    #external: true
+
+volumes:
+  config:
+    driver: local
+  work:
+    driver: local

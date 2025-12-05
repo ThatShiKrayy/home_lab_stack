@@ -1,0 +1,19 @@
+services:
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    user: $APPS_PUID:$APPS_PGID
+    security_opt:
+    - no-new-privileges:true
+    networks:
+    - observability
+    ports:
+    - "9094:3100"
+    volumes:
+    - $OBS_DATA/loki/loki-config.yaml:/etc/loki/loki-config.yaml
+    - $CORELOGDIR:/var/log:ro
+    - /mnt/plexcache/observability/loki:/var/lib/loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: 1.0

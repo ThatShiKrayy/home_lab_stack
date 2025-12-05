@@ -1,0 +1,57 @@
+services:
+  traefik:
+    container_name: traefik
+    environment:
+    - PUID=$APPS_PUID
+    - PGID=$APPS_PGID
+    - TZ=$TZ
+    - DOMAINNAME_1=$DOMAINNAME_1
+    - DOMAINNAME_2=$DOMAINNAME_2
+    - CLOUDFLARE_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token
+    image: traefik:latest
+    labels:
+    - "traefik.enable=true"
+    # # HTTP Routers
+    - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
+    # # Services - API
+    - "traefik.http.routers.traefik-rtr.service=api@internal"
+    networks:
+      proxy:
+        ipv4_address: 172.22.0.254
+      socket_proxy:
+      observability:
+    ports:
+    - target: 80
+      published: 80
+      protocol: tcp
+      mode: host
+    - target: 443
+      published: 443
+      protocol: tcp
+      mode: host
+    - target: 8448
+      published: 8448
+      protocol: tcp
+      mode: host
+    - target: 8080
+      published: 8085
+      protocol: tcp
+      mode: host
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    secrets:
+    - cf_dns_api_token
+    - cloudflare_email
+    volumes:
+    - $CORE_DATA/traefik/rules/:/rules
+    - $CORE_DATA/traefik/acme/acme.json:/acme.json
+    - $CORELOGDIR/traefik:/logs
+    - $CORE_DATA/traefik/config/traefik.yml:/etc/traefik/traefik.yml
+    mem_limit: 1g
+    cpus: 1.0
+secrets:
+  cf_dns_api_token:
+    file: $DOCKERDIR/secrets/cf_dns_api_token
+  cloudflare_email:
+    file: $DOCKERDIR/secrets/cloudflare_email
