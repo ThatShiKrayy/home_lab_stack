@@ -1,0 +1,50 @@
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse
+    restart: unless-stopped
+    networks:
+      - professional
+      - proxy
+    depends_on:
+      - matrix_postgres
+      - matrix_redis
+
+    volumes:
+      - ${PRO_DATA}/matrix/synapse:/data
+
+    environment:
+      SYNAPSE_SERVER_NAME: matrix.${DOMAINNAME_1}
+      SYNAPSE_REPORT_STATS: "yes"
+      POSTGRES_DB: synapse
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${MATRIX_DB_PASSWORD}
+      POSTGRES_HOST: matrix_postgres
+      REDIS_HOST: matrix_redis
+
+    labels:
+      - "traefik.enable=true"
+
+      ## Client HTTPS Router (443)
+      - "traefik.http.routers.synapse-rtr.entrypoints=websecure"
+      - "traefik.http.routers.synapse-rtr.rule=Host(`matrix.${DOMAINNAME_1}`)"
+      - "traefik.http.routers.synapse-rtr.service=synapse-svc"
+      - "traefik.http.routers.synapse-rtr.middlewares=chain-no-auth@file"
+
+      ## Federation Router (8448)
+      - "traefik.http.routers.matrix-fed.entrypoints=websecure_8448"
+      - "traefik.http.routers.matrix-fed.rule=Host(`matrix.${DOMAINNAME_1}`)"
+      - "traefik.http.routers.matrix-fed.service=matrix-fed-svc"
+      - "traefik.http.routers.matrix-fed.tls=true"
+      - "traefik.http.routers.matrix-fed.tls.certresolver=dns-cloudflare"
+
+      ## Services
+      - "traefik.http.services.synapse-svc.loadbalancer.server.port=8008"
+      - "traefik.http.services.matrix-fed-svc.loadbalancer.server.port=8008"
+
+      ## Networking
+      - "traefik.docker.network=proxy"
+
+      ## Prometheus Metrics
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9000"

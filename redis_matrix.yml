@@ -1,0 +1,14 @@
+services:
+  matrix_redis:
+    image: redis:7-alpine
+    container_name: matrix_redis
+    restart: unless-stopped
+    networks:
+      - professional
+    volumes:
+      - ${PRO_DATA}/matrix/redis:/data
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    read_only: false
